@@ -116,7 +116,7 @@ def init_db(db):
     """
     Opens and creates and database
     :param db: The file path for the database
-    :return: conn, the sqlite db connection
+    :return: None
     """
 
     database = peewee.SqliteDatabase(db)
@@ -127,9 +127,9 @@ def init_db(db):
 
 def get_or_add_case(case):
     """
-    Gets a custodian by name and adds it to the table
-    :param custodian: The name of the custodian
-    :return: custodian_model, custodian peewee model instance
+    Gets a case by reference and adds it to the table
+    :param case: The name of the case
+    :return: case_model, case peewee model instance
     """
     case_model, created = Case.get_or_create(case_ref=case)
     if created:
@@ -143,8 +143,9 @@ def get_or_add_case(case):
 def get_teamviewer_connections(logfile, case):
     '''
     Function to take the user supplied input file and parse the data into a list ready to be extracted to csv
-    :param file: takes the file provided by the user that has been validated through main
-    :return: a list with tuples contained relevant log file data
+    :param logfile: takes the file provided by the user that has been validated through main
+    :param case: Case reference number
+    :return: a list with a dict contained relevant log file data
     '''
 
     teamviewer_list = []
@@ -180,6 +181,11 @@ def get_teamviewer_connections(logfile, case):
 
 
 def get_hash_value(source):
+    """
+    Function added to hash the Teamviewer connections log. Currently not written into code but exists for future use
+    :param source: Path to teamviewer Connections_incoming.txt file
+    :return: Hash value of file
+    """
     BUF_SIZE = 65536  # reads the data in 64kb chunks
 
     md5 = hashlib.md5()
@@ -198,7 +204,7 @@ def write_output(source, case):
     """
     Handles writing the data to either CSV or HTML file format
     :param source: The output file
-    :param custodian_model: PeeWee model instance for the custodian
+    :param case: Case reference provided by user
     :return: None
     """
     count = TeamViewerLogs.select().where(
@@ -234,7 +240,7 @@ def write_to_csv(source, case_model):
     """
     Generates CSV report from the Files table
     :param source: The output file loccation
-    :param case_model: Peewee model instance for custodian
+    :param case_model: Peewee model instance for case
     :return: None
     """
     file_data = [entry for entry in TeamViewerLogs.select().where(
@@ -254,7 +260,7 @@ def write_to_html(source, case_model):
     """
     The writeHTML function generates an HTML report from the Files table
     :param source: The output filepath
-    :param custodian_model: Peewee model instance for the custodian
+    :param case_model: Peewee model instance for the case
     :return: None
     """
     template = get_template()
@@ -286,8 +292,8 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter
     )
     parser.add_argument(
-        'CASE', help='Name of custodian collection is of.')
-    parser.add_argument('--input', help='Path to incoming_connections.txt')
+        'CASE', help='Case reference it is a collection of.')
+    parser.add_argument('--input', help='Path to Connections_incoming.txt')
     parser.add_argument(
         '--output', help='Output file to write to. Compatible with .csv or .html')
     parser.add_argument('-l', help='File path and name of log file')
